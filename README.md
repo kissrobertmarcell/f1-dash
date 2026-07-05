@@ -28,8 +28,8 @@ It refreshes cached standings and schedule after each race start time plus four 
 
 ```bash
 cd frontend
-cmd /c npm install
-cmd /c npm run dev
+npm install
+npm run dev
 ```
 
 The frontend reads from `/api/dashboard/` only. Standings and schedule are served from SQLite; weather is fetched live by Django because that payload is small.
