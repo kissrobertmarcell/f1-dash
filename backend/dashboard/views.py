@@ -1,8 +1,13 @@
+import logging
+
 from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
 from .models import ConstructorStanding, DriverStanding, Race, SyncState
-from .services import get_live_weather
+from .services import get_driver_results, get_live_weather
+
+logger = logging.getLogger(__name__)
 
 
 def _decimal(value):
@@ -23,6 +28,7 @@ def dashboard(_request):
         try:
             weather = get_live_weather(next_race)
         except Exception:
+            logger.exception("Failed to fetch live weather for race %s", next_race.race_name)
             weather = None
 
     sync = SyncState.objects.filter(key="f1_dashboard").first()
@@ -58,6 +64,44 @@ def dashboard(_request):
             "nextRefreshAt": _iso(sync.next_refresh_at) if sync else None,
             "error": sync.error if sync else "",
         },
+    }
+    return JsonResponse(payload)
+
+
+def driver_results(_request, driver_id):
+    driver = get_object_or_404(DriverStanding, driver_id=driver_id)
+
+    try:
+        season_results = get_driver_results(driver_id)
+    except Exception:
+        logger.exception("Failed to fetch results for driver %s", driver_id)
+        season_results = {"results": []}
+
+    payload = {
+        "driver": {
+            "driverId": driver.driver_id,
+            "name": f"{driver.given_name} {driver.family_name}",
+            "code": driver.code,
+            "nationality": driver.nationality,
+            "constructor": driver.constructor,
+            "position": driver.position,
+            "points": _decimal(driver.points),
+            "wins": driver.wins,
+        },
+        "results": [
+            {
+                "round": result["round"],
+                "raceName": result["raceName"],
+                "circuitName": result["circuitName"],
+                "date": result.get("date"),
+                "position": result["position"],
+                "points": result["points"],
+                "grid": result["grid"],
+                "status": result["status"],
+                "constructor": result["constructor"],
+            }
+            for result in season_results.get("results", [])
+        ],
     }
     return JsonResponse(payload)
 

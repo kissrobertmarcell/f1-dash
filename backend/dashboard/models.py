@@ -34,6 +34,26 @@ class ConstructorStanding(models.Model):
         return f"{self.position}. {self.name}"
 
 
+class DriverResult(models.Model):
+    driver = models.ForeignKey(DriverStanding, on_delete=models.CASCADE, related_name="results")
+    round = models.PositiveIntegerField()
+    race_name = models.CharField(max_length=160)
+    circuit_name = models.CharField(max_length=160)
+    date = models.DateField(null=True, blank=True)
+    position = models.PositiveIntegerField()
+    points = models.PositiveIntegerField(default=0)
+    grid = models.PositiveIntegerField(default=0)
+    status = models.CharField(max_length=80, blank=True)
+    constructor = models.CharField(max_length=120, blank=True)
+
+    class Meta:
+        ordering = ["round"]
+        constraints = [models.UniqueConstraint(fields=["driver", "round"], name="unique_driver_result_round")]
+
+    def __str__(self):
+        return f"{self.driver} - R{self.round}"
+
+
 class Race(models.Model):
     round = models.PositiveIntegerField(unique=True)
     race_name = models.CharField(max_length=160)

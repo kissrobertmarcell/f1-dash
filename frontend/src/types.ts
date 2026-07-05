@@ -55,6 +55,34 @@ export type SyncState = {
   error: string
 }
 
+export type DriverProfile = {
+  driverId: string;
+  name: string;
+  code: string;
+  nationality: string;
+  constructor: string;
+  position: number;
+  points: number;
+  wins: number;
+};
+
+export type DriverRaceResult = {
+  round: number;
+  raceName: string;
+  circuitName: string;
+  date: string | null;
+  position: number;
+  points: number;
+  grid: number;
+  status: string;
+  constructor: string;
+};
+
+export type DriverProfileData = {
+  driver: DriverProfile;
+  results: DriverRaceResult[];
+};
+
 export type DashboardData = {
   drivers: DriverStanding[]
   constructors: ConstructorStanding[]

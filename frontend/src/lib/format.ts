@@ -1,7 +1,11 @@
+const dateTimeFormatter = new Intl.DateTimeFormat(undefined, {
+  dateStyle: "medium",
+  timeStyle: "short",
+})
+
 export function formatDateTime(value?: string | null) {
   if (!value) return null
-  return new Intl.DateTimeFormat(undefined, {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(value))
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return null
+  return dateTimeFormatter.format(date)
 }

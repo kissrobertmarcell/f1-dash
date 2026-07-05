@@ -10,9 +10,9 @@ export function BlockSkeleton() {
 
 export function SkeletonRows() {
   return Array.from({ length: 8 }).map((_, index) => (
-    <tr key={index}>
-      <td className="px-4 py-3" colSpan={5}>
-        <div className="h-6 animate-pulse rounded bg-slate-800" />
+    <tr key={index} aria-label="Loading standings row">
+      <td className="px-4 py-3" colSpan={5} aria-label="Loading standings row">
+        <div className="h-6 animate-pulse rounded bg-slate-800" aria-hidden="true" />
       </td>
     </tr>
   ))

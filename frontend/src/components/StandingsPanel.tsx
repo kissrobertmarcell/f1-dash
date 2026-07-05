@@ -6,17 +6,19 @@ import { SkeletonRows } from "./common/Skeletons"
 import type { StandingMode, StandingRow } from "../types"
 
 type StandingsPanelProps = {
-  isLoading: boolean
-  mode: StandingMode
-  onModeChange: (mode: StandingMode) => void
-  rows: StandingRow[]
-}
+  isLoading: boolean;
+  mode: StandingMode;
+  onModeChange: (mode: StandingMode) => void;
+  rows: StandingRow[];
+  onDriverSelect?: (driverId: string) => void;
+};
 
 export function StandingsPanel({
   isLoading,
   mode,
   onModeChange,
   rows,
+  onDriverSelect,
 }: StandingsPanelProps) {
   return (
     <section className="rounded-lg border border-slate-800 bg-slate-950 shadow-panel">
@@ -27,34 +29,44 @@ export function StandingsPanel({
           </div>
           <div>
             <h2 className="text-lg font-bold text-white">Standings</h2>
-            <p className="text-sm text-slate-400">Stored championship data from the backend cache</p>
+            <p className="text-sm text-slate-400">
+              Stored championship data from the backend cache
+            </p>
           </div>
         </div>
 
         <ToggleGroup.Root
+          aria-label="Standings view"
           className="grid grid-cols-2 rounded-md bg-slate-900 p-1"
           type="single"
           value={mode}
           onValueChange={(value) => {
-            if (isStandingMode(value)) onModeChange(value)
-          }}
-        >
-          <ToggleGroup.Item className={segmentClass(mode === "drivers")} value="drivers">
+            if (isStandingMode(value)) onModeChange(value);
+          }}>
+          <ToggleGroup.Item
+            className={segmentClass(mode === "drivers")}
+            value="drivers">
             Drivers
           </ToggleGroup.Item>
-          <ToggleGroup.Item className={segmentClass(mode === "constructors")} value="constructors">
+          <ToggleGroup.Item
+            className={segmentClass(mode === "constructors")}
+            value="constructors">
             Constructors
           </ToggleGroup.Item>
         </ToggleGroup.Root>
       </div>
 
       <div className="overflow-x-auto">
-        <table className="min-w-full text-left text-sm">
+        <table className="min-w-full text-left text-sm" aria-busy={isLoading}>
           <thead className="bg-slate-900 text-xs uppercase text-slate-400">
             <tr>
               <th className="w-16 px-4 py-3">Pos</th>
-              <th className="px-4 py-3">{mode === "drivers" ? "Driver" : "Constructor"}</th>
-              <th className="px-4 py-3">{mode === "drivers" ? "Team" : "Nation"}</th>
+              <th className="px-4 py-3">
+                {mode === "drivers" ? "Driver" : "Constructor"}
+              </th>
+              <th className="px-4 py-3">
+                {mode === "drivers" ? "Team" : "Nation"}
+              </th>
               <th className="px-4 py-3 text-right">Wins</th>
               <th className="px-4 py-3 text-right">Pts</th>
             </tr>
@@ -63,27 +75,53 @@ export function StandingsPanel({
             {isLoading ? <SkeletonRows /> : null}
             {!isLoading && rows.length === 0 ? (
               <tr>
-                <td className="px-4 py-8 text-center text-slate-400" colSpan={5}>
+                <td
+                  className="px-4 py-8 text-center text-slate-400"
+                  colSpan={5}>
                   No cached standings yet.
                 </td>
               </tr>
             ) : null}
-            {!isLoading ? rows.map((row) => <StandingTableRow key={standingKey(row)} row={row} />) : null}
+            {!isLoading
+              ? rows.map((row) => (
+                  <StandingTableRow
+                    key={standingKey(row)}
+                    row={row}
+                    onDriverSelect={onDriverSelect}
+                  />
+                ))
+              : null}
           </tbody>
         </table>
       </div>
     </section>
-  )
+  );
 }
 
-function StandingTableRow({ row }: { row: StandingRow }) {
-  const isDriver = "driverId" in row
+function StandingTableRow({
+  row,
+  onDriverSelect,
+}: {
+  row: StandingRow;
+  onDriverSelect?: (driverId: string) => void;
+}) {
+  const isDriver = "driverId" in row;
 
   return (
     <tr className="hover:bg-slate-900/70">
       <td className="px-4 py-3 font-bold text-white">{row.position}</td>
       <td className="px-4 py-3">
-        <div className="font-semibold text-white">{row.name}</div>
+        <button
+          type="button"
+          onClick={() => {
+            if (isDriver && onDriverSelect) {
+              onDriverSelect(row.driverId);
+            }
+          }}
+          className={`text-left ${isDriver ? "cursor-pointer text-white transition hover:text-red-300" : "text-white"}`}
+          disabled={!isDriver || !onDriverSelect}>
+          <div className="font-semibold">{row.name}</div>
+        </button>
         {isDriver && row.code ? (
           <div className="mt-1 flex items-center gap-2 text-xs font-medium text-red-300">
             <FlagIcon nationality={row.nationality} />
@@ -91,11 +129,15 @@ function StandingTableRow({ row }: { row: StandingRow }) {
           </div>
         ) : null}
       </td>
-      <td className="px-4 py-3 text-slate-300">{isDriver ? row.constructor : row.nationality}</td>
+      <td className="px-4 py-3 text-slate-300">
+        {isDriver ? row.constructor : row.nationality}
+      </td>
       <td className="px-4 py-3 text-right font-medium">{row.wins}</td>
-      <td className="px-4 py-3 text-right font-black text-white">{row.points}</td>
+      <td className="px-4 py-3 text-right font-black text-white">
+        {row.points}
+      </td>
     </tr>
-  )
+  );
 }
 
 function standingKey(row: StandingRow) {
