@@ -1,5 +1,6 @@
-import { Flag, MapPin } from "lucide-react";
+import { MapPin } from "lucide-react";
 
+import { RaceFlagIcon } from "./RaceFlagIcon";
 import { EmptyState } from "./common/EmptyState";
 import { PanelTitle } from "./common/PanelTitle";
 import { BlockSkeleton } from "./common/Skeletons";
@@ -29,7 +30,10 @@ export function RacePanel({ race, isLoading }: RacePanelProps) {
 
   return (
     <section className="rounded-lg border border-slate-800 bg-slate-950 p-4 shadow-panel">
-      <PanelTitle icon={<Flag size={20} />} title="Next race" />
+      <PanelTitle
+        icon={<RaceFlagIcon country={race?.country} />}
+        title="Next race"
+      />
       {isLoading ? <BlockSkeleton /> : null}
       {!isLoading && race ? (
         <div className="mt-4">
