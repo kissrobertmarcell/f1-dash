@@ -28,34 +28,19 @@ def dashboard(_request):
         try:
             weather = get_live_weather(next_race)
         except Exception:
-            logger.exception("Failed to fetch live weather for race %s", next_race.race_name)
+            logger.exception(
+                "Failed to fetch live weather for race %s", next_race.race_name
+            )
             weather = None
 
     sync = SyncState.objects.filter(key="f1_dashboard").first()
 
     payload = {
         "drivers": [
-            {
-                "position": row.position,
-                "driverId": row.driver_id,
-                "name": f"{row.given_name} {row.family_name}",
-                "code": row.code,
-                "nationality": row.nationality,
-                "constructor": row.constructor,
-                "points": _decimal(row.points),
-                "wins": row.wins,
-            }
-            for row in DriverStanding.objects.all()
+            _serialize_driver_standing(row) for row in DriverStanding.objects.all()
         ],
         "constructors": [
-            {
-                "position": row.position,
-                "constructorId": row.constructor_id,
-                "name": row.name,
-                "nationality": row.nationality,
-                "points": _decimal(row.points),
-                "wins": row.wins,
-            }
+            _serialize_constructor_standing(row)
             for row in ConstructorStanding.objects.all()
         ],
         "nextRace": _serialize_race(next_race, weather),
@@ -78,32 +63,37 @@ def driver_results(_request, driver_id):
         season_results = {"results": []}
 
     payload = {
-        "driver": {
-            "driverId": driver.driver_id,
-            "name": f"{driver.given_name} {driver.family_name}",
-            "code": driver.code,
-            "nationality": driver.nationality,
-            "constructor": driver.constructor,
-            "position": driver.position,
-            "points": _decimal(driver.points),
-            "wins": driver.wins,
-        },
+        "driver": _serialize_driver_standing(driver),
         "results": [
-            {
-                "round": result["round"],
-                "raceName": result["raceName"],
-                "circuitName": result["circuitName"],
-                "date": result.get("date"),
-                "position": result["position"],
-                "points": result["points"],
-                "grid": result["grid"],
-                "status": result["status"],
-                "constructor": result["constructor"],
-            }
+            {**result, "points": _decimal(result["points"])}
             for result in season_results.get("results", [])
         ],
     }
     return JsonResponse(payload)
+
+
+def _serialize_driver_standing(row):
+    return {
+        "position": row.position,
+        "driverId": row.driver_id,
+        "name": f"{row.given_name} {row.family_name}",
+        "code": row.code,
+        "nationality": row.nationality,
+        "constructor": row.constructor,
+        "points": _decimal(row.points),
+        "wins": row.wins,
+    }
+
+
+def _serialize_constructor_standing(row):
+    return {
+        "position": row.position,
+        "constructorId": row.constructor_id,
+        "name": row.name,
+        "nationality": row.nationality,
+        "points": _decimal(row.points),
+        "wins": row.wins,
+    }
 
 
 def _serialize_race(race, weather):

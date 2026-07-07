@@ -1,14 +1,14 @@
-import { AlertCircle, RefreshCcw } from "lucide-react"
+import { AlertCircle, RefreshCcw } from "lucide-react";
 
-import { formatDateTime } from "../lib/format"
-import type { SyncState } from "../types"
+import { formatDateTime } from "../lib/format";
+import type { SyncState } from "../lib/schemas";
 
 type SyncPillProps = {
-  sync?: SyncState
-}
+  sync?: SyncState;
+};
 
 export function SyncPill({ sync }: SyncPillProps) {
-  const hasError = Boolean(sync?.error)
+  const hasError = Boolean(sync?.error);
 
   return (
     <div
@@ -33,5 +33,5 @@ export function SyncPill({ sync }: SyncPillProps) {
         {formatDateTime(sync?.nextRefreshAt) ?? "waiting for data"}
       </strong>
     </div>
-  )
+  );
 }

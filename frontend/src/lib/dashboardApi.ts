@@ -1,48 +1,51 @@
-import type { DashboardData, DriverProfileData } from "../types";
-import { isDashboardData } from "./guards";
+import type { ZodType } from "zod";
 
-export async function fetchDashboardData(
+import {
+  dashboardDataSchema,
+  driverProfileDataSchema,
+  type DashboardData,
+  type DriverProfileData,
+} from "./schemas";
+
+async function fetchJson<T>(
+  url: string,
+  schema: ZodType<T>,
+  unavailableMessage: string,
   signal?: AbortSignal,
-): Promise<DashboardData> {
-  const response = await fetch("/api/dashboard/", { signal });
+): Promise<T> {
+  const response = await fetch(url, { signal });
   if (!response.ok) {
-    throw new Error("Dashboard API unavailable");
+    throw new Error(unavailableMessage);
   }
 
   const data: unknown = await response.json();
-  if (!isDashboardData(data)) {
-    throw new Error("Dashboard API returned an unexpected payload");
+  const result = schema.safeParse(data);
+  if (!result.success) {
+    throw new Error(`${unavailableMessage}: unexpected payload shape`);
   }
 
-  return data;
+  return result.data;
 }
 
-export async function fetchDriverProfile(
+export function fetchDashboardData(
+  signal?: AbortSignal,
+): Promise<DashboardData> {
+  return fetchJson(
+    "/api/dashboard/",
+    dashboardDataSchema,
+    "Dashboard API unavailable",
+    signal,
+  );
+}
+
+export function fetchDriverProfile(
   driverId: string,
   signal?: AbortSignal,
 ): Promise<DriverProfileData> {
-  const response = await fetch(`/api/drivers/${driverId}/results/`, { signal });
-  if (!response.ok) {
-    throw new Error("Driver profile API unavailable");
-  }
-
-  const data: unknown = await response.json();
-  if (!isDriverProfileData(data)) {
-    throw new Error("Driver profile API returned an unexpected payload");
-  }
-
-  return data;
-}
-
-function isDriverProfileData(value: unknown): value is DriverProfileData {
-  if (typeof value !== "object" || value === null || Array.isArray(value)) {
-    return false;
-  }
-
-  const candidate = value as Record<string, unknown>;
-  return (
-    typeof candidate.driver === "object" &&
-    candidate.driver !== null &&
-    Array.isArray(candidate.results)
+  return fetchJson(
+    `/api/drivers/${driverId}/results/`,
+    driverProfileDataSchema,
+    "Driver profile API unavailable",
+    signal,
   );
 }

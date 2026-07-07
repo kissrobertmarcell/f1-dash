@@ -1,9 +1,14 @@
-import * as ToggleGroup from "@radix-ui/react-toggle-group"
-import { Trophy } from "lucide-react"
+import * as ToggleGroup from "@radix-ui/react-toggle-group";
+import { Trophy } from "lucide-react";
 
-import { FlagIcon } from "./FlagIcon"
-import { SkeletonRows } from "./common/Skeletons"
-import type { StandingMode, StandingRow } from "../types"
+import { FlagIcon } from "./FlagIcon";
+import { SkeletonRows } from "./common/Skeletons";
+import {
+  isDriverStanding,
+  standingModeSchema,
+  type StandingMode,
+  type StandingRow,
+} from "../lib/schemas";
 
 type StandingsPanelProps = {
   isLoading: boolean;
@@ -42,15 +47,18 @@ export function StandingsPanel({
           value={mode}
           onValueChange={(value) => {
             if (isStandingMode(value)) onModeChange(value);
-          }}>
+          }}
+        >
           <ToggleGroup.Item
             className={segmentClass(mode === "drivers")}
-            value="drivers">
+            value="drivers"
+          >
             Drivers
           </ToggleGroup.Item>
           <ToggleGroup.Item
             className={segmentClass(mode === "constructors")}
-            value="constructors">
+            value="constructors"
+          >
             Constructors
           </ToggleGroup.Item>
         </ToggleGroup.Root>
@@ -77,7 +85,8 @@ export function StandingsPanel({
               <tr>
                 <td
                   className="px-4 py-8 text-center text-slate-400"
-                  colSpan={5}>
+                  colSpan={5}
+                >
                   No cached standings yet.
                 </td>
               </tr>
@@ -105,7 +114,7 @@ function StandingTableRow({
   row: StandingRow;
   onDriverSelect?: (driverId: string) => void;
 }) {
-  const isDriver = "driverId" in row;
+  const isDriver = isDriverStanding(row);
 
   return (
     <tr className="hover:bg-slate-900/70">
@@ -119,7 +128,8 @@ function StandingTableRow({
             }
           }}
           className={`text-left ${isDriver ? "cursor-pointer text-white transition hover:text-red-300" : "text-white"}`}
-          disabled={!isDriver || !onDriverSelect}>
+          disabled={!isDriver || !onDriverSelect}
+        >
           <div className="font-semibold">{row.name}</div>
         </button>
         {isDriver && row.code ? (
@@ -141,16 +151,16 @@ function StandingTableRow({
 }
 
 function standingKey(row: StandingRow) {
-  return "driverId" in row ? row.driverId : row.constructorId
+  return isDriverStanding(row) ? row.driverId : row.constructorId;
 }
 
 function segmentClass(isActive: boolean) {
-  const base = "rounded px-3 py-2 text-sm font-bold outline-none transition"
+  const base = "rounded px-3 py-2 text-sm font-bold outline-none transition";
   return isActive
     ? `${base} bg-slate-700 text-white shadow-sm`
-    : `${base} text-slate-400 hover:text-white`
+    : `${base} text-slate-400 hover:text-white`;
 }
 
 function isStandingMode(value: string): value is StandingMode {
-  return value === "drivers" || value === "constructors"
+  return standingModeSchema.safeParse(value).success;
 }

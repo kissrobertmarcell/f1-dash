@@ -2,7 +2,7 @@ import { ArrowLeft, Flag, Trophy } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { fetchDriverProfile } from "../lib/dashboardApi";
-import type { DriverProfileData } from "../types";
+import type { DriverProfileData } from "../lib/schemas";
 
 type DriverProfilePageProps = {
   driverId: string;
@@ -46,7 +46,8 @@ export function DriverProfilePage({
         <button
           type="button"
           onClick={onBack}
-          className="mb-4 inline-flex items-center gap-2 rounded-md border border-slate-700 px-3 py-2 text-sm font-semibold text-slate-200 transition hover:border-red-500 hover:text-white">
+          className="mb-4 inline-flex items-center gap-2 rounded-md border border-slate-700 px-3 py-2 text-sm font-semibold text-slate-200 transition hover:border-red-500 hover:text-white"
+        >
           <ArrowLeft size={16} />
           Back to standings
         </button>
@@ -139,7 +140,8 @@ export function DriverProfilePage({
                       {profile.results.map((result) => (
                         <tr
                           key={`${result.round}-${result.raceName}`}
-                          className="bg-slate-950/70">
+                          className="bg-slate-950/70"
+                        >
                           <td className="px-4 py-3 font-semibold text-slate-200">
                             {result.round}
                           </td>
