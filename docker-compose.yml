@@ -1,0 +1,14 @@
+services:
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      DEBUG: "False"
+      ALLOWED_HOSTS: "localhost,127.0.0.1"
+      DATABASE_PATH: /app/backend/data/db.sqlite3
+    volumes:
+      - sqlite-data:/app/backend/data
+
+volumes:
+  sqlite-data:

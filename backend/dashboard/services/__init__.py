@@ -4,6 +4,7 @@ from .sync import (
     get_live_weather,
     next_refresh_after_race,
     record_sync_error,
+    refresh_if_due,
 )
 
 __all__ = [
@@ -12,4 +13,5 @@ __all__ = [
     "get_live_weather",
     "next_refresh_after_race",
     "record_sync_error",
+    "refresh_if_due",
 ]

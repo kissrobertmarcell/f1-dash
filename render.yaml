@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: f1-dash
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: free
+    healthCheckPath: /api/dashboard/
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: ".onrender.com"
+
+# --- Optional upgrade: persist the SQLite database across deploys ---
+# The free plan's disk is wiped on every deploy/restart. The app tolerates
+# this fine (it lazily re-seeds itself on the next dashboard request), but
+# if you'd rather not lose history/cache, upgrade `plan` above to `starter`
+# (or higher) and add:
+#
+#   disk:
+#     name: f1-dash-data
+#     mountPath: /app/backend/data
+#     sizeGB: 1
+#
+# ...plus a `DATABASE_PATH` env var set to `/app/backend/data/db.sqlite3`
+# in the `envVars` list above.

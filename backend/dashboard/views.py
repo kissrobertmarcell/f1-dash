@@ -5,7 +5,7 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
 from .models import ConstructorStanding, DriverStanding, Race, SyncState
-from .services import get_driver_results, get_live_weather
+from .services import get_driver_results, get_live_weather, refresh_if_due
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +19,8 @@ def _iso(value):
 
 
 def dashboard(_request):
+    refresh_if_due()
+
     next_race = Race.objects.filter(race_start_at__gte=timezone.now()).first()
     if next_race is None:
         next_race = Race.objects.order_by("-race_start_at").first()

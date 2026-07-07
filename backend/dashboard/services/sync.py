@@ -1,5 +1,6 @@
 """Orchestration: refresh scheduling, weather lookups, and driver results."""
 
+import logging
 from datetime import timedelta
 
 from django.core.cache import cache
@@ -9,6 +10,8 @@ from django.utils import timezone
 from ..models import DriverStanding, Race, SyncState
 from . import ergast_client, repository, weather_client
 from .parsers import parse_driver_results
+
+logger = logging.getLogger(__name__)
 
 WEATHER_CACHE_TTL_SECONDS = 10 * 60
 
@@ -42,6 +45,33 @@ def record_sync_error(error):
     sync.error = str(error)
     sync.next_refresh_at = timezone.now() + timedelta(minutes=30)
     sync.save()
+
+
+def refresh_if_due():
+    """Best-effort, synchronous refresh triggered from the dashboard view.
+
+    This lets the app stay correct in production with a single web process
+    and no separate scheduler/cron/worker: whichever request happens to
+    land after data goes stale pays the (~1-3s) cost of a refetch, and
+    every other request is a cheap no-op. A dedicated `schedule_f1_fetch`
+    process (see management commands) remains available for anyone who
+    prefers a background worker instead, and is fully compatible with this
+    since both paths update the same `SyncState` row.
+    """
+    sync = SyncState.objects.filter(key="f1_dashboard").first()
+    is_due = (
+        sync is None
+        or sync.next_refresh_at is None
+        or sync.next_refresh_at <= timezone.now()
+    )
+    if not is_due:
+        return
+
+    try:
+        fetch_dashboard_data()
+    except Exception as exc:
+        record_sync_error(exc)
+        logger.warning("Deferred dashboard refresh failed: %s", exc)
 
 
 def next_refresh_after_race():
