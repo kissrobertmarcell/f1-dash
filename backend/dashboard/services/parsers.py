@@ -32,6 +32,35 @@ def parse_driver_results(races, driver_id):
     ]
 
 
+def parse_race_results(results):
+    """Flatten an Ergast race's ``Results`` list into the full classification.
+
+    Unlike `parse_driver_results` (one driver, many races), this is one
+    race, every driver -- used for the "last race results" view.
+    """
+    parsed = []
+    for order, result in enumerate(results):
+        driver = result.get("Driver", {})
+        constructor = result.get("Constructor", {})
+        time_info = result.get("Time") or {}
+        parsed.append(
+            {
+                "order": order,
+                "position": result.get("positionText") or result.get("position", ""),
+                "driverId": driver.get("driverId", ""),
+                "driverName": f"{driver.get('givenName', '')} {driver.get('familyName', '')}".strip(),
+                "driverCode": driver.get("code", ""),
+                "constructor": constructor.get("name", ""),
+                "grid": int(result.get("grid", 0)),
+                "laps": int(result.get("laps", 0)),
+                "status": status_value(result.get("status")),
+                "time": time_info.get("time") or "",
+                "points": Decimal(result.get("points", 0)),
+            }
+        )
+    return parsed
+
+
 def status_value(status):
     if isinstance(status, dict):
         return status.get("status", "")

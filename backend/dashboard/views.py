@@ -5,7 +5,12 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
 from .models import ConstructorStanding, DriverStanding, Race, SyncState
-from .services import get_driver_results, get_live_weather, refresh_if_due
+from .services import (
+    get_driver_results,
+    get_last_race_results,
+    get_live_weather,
+    refresh_if_due,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -72,6 +77,51 @@ def driver_results(_request, driver_id):
         ],
     }
     return JsonResponse(payload)
+
+
+def last_race_results(_request):
+    refresh_if_due()
+
+    try:
+        data = get_last_race_results()
+    except Exception:
+        logger.exception("Failed to fetch last race results")
+        data = {"race": None, "results": []}
+
+    payload = {
+        "race": _serialize_race_summary(data["race"]),
+        "results": [_serialize_race_result(row) for row in data["results"]],
+    }
+    return JsonResponse(payload)
+
+
+def _serialize_race_summary(race):
+    if race is None:
+        return None
+
+    return {
+        "round": race.round,
+        "raceName": race.race_name,
+        "circuitName": race.circuit_name,
+        "locality": race.locality,
+        "country": race.country,
+        "date": _iso(race.race_start_at),
+    }
+
+
+def _serialize_race_result(row):
+    return {
+        "position": row.position_display,
+        "driverId": row.driver_id,
+        "driverName": row.driver_name,
+        "driverCode": row.driver_code,
+        "constructor": row.constructor,
+        "grid": row.grid,
+        "laps": row.laps,
+        "status": row.status,
+        "time": row.time,
+        "points": _decimal(row.points),
+    }
 
 
 def _serialize_driver_standing(row):

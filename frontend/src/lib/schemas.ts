@@ -9,8 +9,8 @@ import { z } from "zod";
  * type guard in parallel.
  */
 
-export const standingModeSchema = z.enum(["drivers", "constructors"]);
-export type StandingMode = z.infer<typeof standingModeSchema>;
+export const panelModeSchema = z.enum(["drivers", "constructors", "results"]);
+export type PanelMode = z.infer<typeof panelModeSchema>;
 
 export const scheduleKeys = [
   "practice1",
@@ -119,3 +119,33 @@ export const driverProfileDataSchema = z.object({
   results: z.array(driverRaceResultSchema),
 });
 export type DriverProfileData = z.infer<typeof driverProfileDataSchema>;
+
+export const raceResultEntrySchema = z.object({
+  position: z.string(),
+  driverId: z.string(),
+  driverName: z.string(),
+  driverCode: z.string(),
+  constructor: z.string(),
+  grid: z.number(),
+  laps: z.number(),
+  status: z.string(),
+  time: z.string(),
+  points: z.number(),
+});
+export type RaceResultEntry = z.infer<typeof raceResultEntrySchema>;
+
+export const raceSummarySchema = z.object({
+  round: z.number(),
+  raceName: z.string(),
+  circuitName: z.string(),
+  locality: z.string(),
+  country: z.string(),
+  date: z.string().nullable(),
+});
+export type RaceSummary = z.infer<typeof raceSummarySchema>;
+
+export const lastRaceResultsSchema = z.object({
+  race: raceSummarySchema.nullable(),
+  results: z.array(raceResultEntrySchema),
+});
+export type LastRaceResults = z.infer<typeof lastRaceResultsSchema>;

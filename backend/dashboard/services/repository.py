@@ -5,7 +5,7 @@ from decimal import Decimal
 
 import requests
 
-from ..models import ConstructorStanding, DriverResult, DriverStanding, Race
+from ..models import ConstructorStanding, DriverResult, DriverStanding, Race, RaceResult
 from . import ergast_client
 from .parsers import (
     constructor_name,
@@ -91,6 +91,29 @@ def store_driver_results_for_driver(driver, results):
                 grid=result["grid"],
                 status=result["status"],
                 constructor=result["constructor"],
+            )
+            for result in results
+        ]
+    )
+
+
+def store_race_results(race, results):
+    RaceResult.objects.filter(race=race).delete()
+    RaceResult.objects.bulk_create(
+        [
+            RaceResult(
+                race=race,
+                order=result["order"],
+                position_display=result["position"],
+                driver_id=result["driverId"],
+                driver_name=result["driverName"],
+                driver_code=result["driverCode"],
+                constructor=result["constructor"],
+                grid=result["grid"],
+                laps=result["laps"],
+                status=result["status"],
+                time=result["time"],
+                points=result["points"],
             )
             for result in results
         ]

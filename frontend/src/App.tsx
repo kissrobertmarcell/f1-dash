@@ -7,16 +7,18 @@ import { StandingsPanel } from "./components/StandingsPanel";
 import { SyncPill } from "./components/SyncPill";
 import { WeatherPanel } from "./components/WeatherPanel";
 import { useDashboardData } from "./lib/useDashboardData";
-import type { StandingMode } from "./lib/schemas";
+import type { PanelMode } from "./lib/schemas";
 
 function App() {
-  const [mode, setMode] = useState<StandingMode>("drivers");
+  const [mode, setMode] = useState<PanelMode>("drivers");
   const [selectedDriverId, setSelectedDriverId] = useState<string | null>(null);
   const { data, error, isLoading } = useDashboardData();
 
   const standings = useMemo(() => {
     if (!data) return [];
-    return mode === "drivers" ? data.drivers : data.constructors;
+    if (mode === "drivers") return data.drivers;
+    if (mode === "constructors") return data.constructors;
+    return [];
   }, [data, mode]);
 
   return (

@@ -82,6 +82,32 @@ class Race(models.Model):
         return f"{self.race_name} ({self.race_start_at:%Y-%m-%d})"
 
 
+class RaceResult(models.Model):
+    race = models.ForeignKey(Race, on_delete=models.CASCADE, related_name="results")
+    order = models.PositiveIntegerField()
+    position_display = models.CharField(max_length=8)
+    driver_id = models.CharField(max_length=80)
+    driver_name = models.CharField(max_length=160)
+    driver_code = models.CharField(max_length=8, blank=True)
+    constructor = models.CharField(max_length=120, blank=True)
+    grid = models.PositiveIntegerField(default=0)
+    laps = models.PositiveIntegerField(default=0)
+    status = models.CharField(max_length=80, blank=True)
+    time = models.CharField(max_length=32, blank=True)
+    points = models.DecimalField(max_digits=7, decimal_places=1, default=0)
+
+    class Meta:
+        ordering = ["order"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["race", "driver_id"], name="unique_race_result_driver"
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.race} - P{self.position_display} {self.driver_name}"
+
+
 class SyncState(models.Model):
     key = models.CharField(max_length=80, unique=True)
     last_success_at = models.DateTimeField(null=True, blank=True)

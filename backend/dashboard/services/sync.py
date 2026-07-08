@@ -7,9 +7,9 @@ from django.core.cache import cache
 from django.db import transaction
 from django.utils import timezone
 
-from ..models import DriverStanding, Race, SyncState
+from ..models import DriverStanding, Race, RaceResult, SyncState
 from . import ergast_client, repository, weather_client
-from .parsers import parse_driver_results
+from .parsers import parse_driver_results, parse_race_results
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +38,54 @@ def fetch_dashboard_data():
         sync.next_refresh_at = next_refresh_after_race()
         sync.error = ""
         sync.save()
+
+    # Kept outside the transaction above and isolated in its own try/except
+    # so a hiccup fetching last-race results never rolls back an otherwise
+    # successful standings/schedule sync.
+    try:
+        fetch_last_race_results()
+    except Exception:
+        logger.warning("Failed to refresh last race results", exc_info=True)
+
+
+def fetch_last_race_results():
+    payload = ergast_client.get_json("last/results.json")
+    races = payload["MRData"]["RaceTable"].get("Races", [])
+    if not races:
+        return
+
+    race_payload = races[0]
+    race = Race.objects.filter(round=int(race_payload["round"])).first()
+    if race is None:
+        return
+
+    results = parse_race_results(race_payload.get("Results", []))
+    with transaction.atomic():
+        repository.store_race_results(race, results)
+
+
+def _latest_race_with_results():
+    return (
+        Race.objects.filter(pk__in=RaceResult.objects.values_list("race_id", flat=True))
+        .order_by("-round")
+        .first()
+    )
+
+
+def get_last_race_results():
+    race = _latest_race_with_results()
+    if race is None:
+        try:
+            fetch_last_race_results()
+        except Exception as exc:
+            logger.warning("Failed to fetch last race results: %s", exc)
+            return {"race": None, "results": []}
+        race = _latest_race_with_results()
+
+    if race is None:
+        return {"race": None, "results": []}
+
+    return {"race": race, "results": list(race.results.all())}
 
 
 def record_sync_error(error):

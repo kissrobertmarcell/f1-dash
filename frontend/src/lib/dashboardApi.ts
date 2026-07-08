@@ -3,8 +3,10 @@ import type { ZodType } from "zod";
 import {
   dashboardDataSchema,
   driverProfileDataSchema,
+  lastRaceResultsSchema,
   type DashboardData,
   type DriverProfileData,
+  type LastRaceResults,
 } from "./schemas";
 
 async function fetchJson<T>(
@@ -46,6 +48,17 @@ export function fetchDriverProfile(
     `/api/drivers/${driverId}/results/`,
     driverProfileDataSchema,
     "Driver profile API unavailable",
+    signal,
+  );
+}
+
+export function fetchLastRaceResults(
+  signal?: AbortSignal,
+): Promise<LastRaceResults> {
+  return fetchJson(
+    "/api/results/last/",
+    lastRaceResultsSchema,
+    "Race results API unavailable",
     signal,
   );
 }
